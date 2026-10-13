@@ -94,7 +94,7 @@ function render() {
     const owner = state.players.find((item) => state.draft[item.id].includes(value));
     button.disabled = ended || Boolean(owner);
     button.title = owner ? `Asignada a ${owner.name}` : `Añadir ${value} puntos a ${player.name}`;
-    const cardName = value === 40 ? 'Papa Johns (40 puntos)' : `Carta ${value}`;
+    const cardName = value === 40 ? 'Papayooo (40 puntos)' : `Carta ${value}`;
     button.setAttribute('aria-label', owner ? `${cardName}, asignada a ${owner.name}` : `Añadir ${cardName} a ${player.name}`);
   }
   $('round-title').textContent = ended ? 'Partida terminada' : `Ronda ${state.rounds.length + 1}`;
@@ -105,7 +105,7 @@ function render() {
   $('player-tabs').innerHTML = state.players.map((item) => `<button class="player-tab ${item.id === selectedId ? 'active' : ''}" data-player="${escape(item.id)}" aria-pressed="${item.id === selectedId}">${escape(item.name)}</button>`).join('');
   $('draft-total').textContent = `+${sum(cards)} puntos`;
   $('selected-label').textContent = `CARTAS DE ${player.name.toLocaleUpperCase('es')}`;
-  $('selected-cards').innerHTML = cards.length ? cards.map((value, index) => `<button class="selected-card ${value === 40 ? 'special' : ''}" data-remove-card="${index}" aria-label="Quitar ${value === 40 ? 'Papa Johns (40 puntos)' : `carta ${value}`} de ${escape(player.name)}">${value === 40 ? 'Papa Johns · 40' : value}<span aria-hidden="true"> ×</span></button>`).join('') : '<p class="empty-state">Sin cartas. Esta ronda suma 0 puntos.</p>';
+  $('selected-cards').innerHTML = cards.length ? cards.map((value, index) => `<button class="selected-card ${value === 40 ? 'special' : ''}" data-remove-card="${index}" aria-label="Quitar ${value === 40 ? 'Papayooo (40 puntos)' : `carta ${value}`} de ${escape(player.name)}">${value === 40 ? 'Papayooo · 40' : value}<span aria-hidden="true"> ×</span></button>`).join('') : '<p class="empty-state">Sin cartas. Esta ronda suma 0 puntos.</p>';
   $('round-summary').innerHTML = state.players.map((item) => `<div><span>${escape(item.name)}</span><strong>+${sum(state.draft[item.id])}</strong></div>`).join('');
   $('finish-round').textContent = `Cerrar ronda ${state.rounds.length + 1}`;
   $('undo-round').disabled = state.rounds.length === 0 || Object.values(state.draft).some((values) => values.length > 0);
@@ -113,7 +113,7 @@ function render() {
   $('history').innerHTML = state.rounds.length ? historyTable(state) : '<p class="empty-state">El historial aparecerá al cerrar la primera ronda.</p>';
 }
 
-$('card-grid').innerHTML = [...Array.from({ length: 20 }, (_, index) => index + 1), 40].map((value) => `<button class="card-button ${value === 40 ? 'special' : ''}" data-card="${value}" aria-label="Añadir ${value === 40 ? 'Papa Johns (40 puntos)' : `carta de ${value} puntos`}">${value}<small>${value === 40 ? 'Papa Johns' : `+${value}`}</small></button>`).join('');
+$('card-grid').innerHTML = [...Array.from({ length: 20 }, (_, index) => index + 1), 40].map((value) => `<button class="card-button ${value === 40 ? 'special' : ''}" data-card="${value}" aria-label="Añadir ${value === 40 ? 'Papayooo (40 puntos)' : `carta de ${value} puntos`}">${value}<small>${value === 40 ? 'Papayooo' : `+${value}`}</small></button>`).join('');
 $('player-form').addEventListener('submit', (event) => {
   event.preventDefault();
   const name = $('player-name').value.trim();
