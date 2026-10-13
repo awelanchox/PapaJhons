@@ -7,6 +7,7 @@ const files = new Map([
   ['/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/game.js', ['game.js', 'text/javascript; charset=utf-8']],
+  ['/history.js', ['history.js', 'text/javascript; charset=utf-8']],
 ]);
 const port = Number(process.env.PORT || 5173);
 const host = process.env.HOST || '127.0.0.1';

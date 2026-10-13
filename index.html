@@ -23,13 +23,13 @@
       <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
       <section id="setup" class="panel setup-panel">
         <div class="section-heading"><div><p class="eyebrow">LA MESA ESTÁ LISTA</p><h2>¿Quién juega hoy?</h2></div><span class="status-pill">2–12 jugadores</span></div>
-        <p>Añade los nombres y empieza una partida.</p>
+        <p>Conserva la mesa de la partida anterior o añade y quita jugadores antes de empezar.</p>
         <form id="player-form" class="player-input-row"><label class="hidden" for="player-name">Nombre del jugador</label><input id="player-name" class="input" placeholder="Nombre del jugador" maxlength="40" autocomplete="off" aria-label="Nombre del jugador" required><button class="button secondary" type="submit">Añadir jugador</button></form>
         <div id="players-list" class="players-list" aria-label="Jugadores de la partida"></div>
         <button id="start" class="button primary" disabled>Empezar partida</button>
       </section>
       <section id="game" class="hidden" aria-label="Partida">
-        <div class="section-heading"><div><p class="eyebrow">TU PARTIDA</p><h2 id="round-title">Ronda 1</h2></div><button id="new-game" class="button ghost">Nueva partida</button></div>
+        <div class="section-heading"><div><p class="eyebrow">TU PARTIDA</p><h2 id="round-title">Ronda 1</h2></div><div class="round-actions"><button id="edit-players" class="button secondary hidden">Editar jugadores</button><button id="new-game" class="button ghost">Nueva partida</button></div></div>
         <div id="result" class="notice finished hidden" role="status"></div>
         <div class="workspace">
           <section class="panel"><div class="section-heading"><h2>Marcador</h2><span class="status-pill">Penalizaciones</span></div><p>Totales de las rondas cerradas. Al llegar a 250, termina la partida.</p><div id="scoreboard" class="scoreboard"></div></section>
@@ -37,9 +37,10 @@
         </div>
         <section class="panel history-panel"><div class="section-heading"><div><p class="eyebrow">CARTA A CARTA</p><h2>Historial de rondas</h2></div><button id="undo-round" class="button secondary" disabled>Deshacer última ronda</button></div><div id="history"></div></section>
       </section>
+      <section class="panel history-panel" aria-label="Historial de partidas"><div class="section-heading"><div><p class="eyebrow">LAS PARTIDAS SE QUEDAN</p><h2>Historial de partidas</h2></div></div><p>Gana la ronda quien suma menos; va ganando quien acumula menos. Se muestran todos los empates. El historial se conserva al volver a jugar, solo en este navegador; borrar sus datos lo elimina.</p><div id="game-history"></div></section>
     </main>
-    <footer class="footer">Papayou · Cartas 1–20 + Papa Johns (40 puntos) · El total más alto pierde.<br>La partida se guarda en este navegador.</footer>
+    <footer class="footer">Papayou · Cartas 1–20 + Papa Johns (40 puntos) · El total más alto pierde.<br>La partida, la mesa y el historial se guardan en este navegador.</footer>
   </div>
-  <dialog id="confirm-dialog" class="modal"><form method="dialog"><h2 id="confirm-title">¿Empezar de nuevo?</h2><p id="confirm-copy">Se borrará la partida actual, incluido su historial.</p><div class="round-actions"><button class="button secondary" value="cancel">Cancelar</button><button class="button danger" value="confirm">Sí, nueva partida</button></div></form></dialog>
+  <dialog id="confirm-dialog" class="modal"><form method="dialog"><h2 id="confirm-title">¿Preparar otra partida?</h2><p id="confirm-copy">La partida actual quedará en el historial. Conservarás los nombres y podrás añadir o quitar jugadores antes de empezar.</p><div class="round-actions"><button class="button secondary" value="cancel">Cancelar</button><button class="button primary" value="confirm">Preparar otra partida</button></div></form></dialog>
 </body>
 </html>

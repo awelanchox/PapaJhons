@@ -1,10 +1,14 @@
 import { createGame, addCard, removeCard, finishRound, undoRound, getTotals, getLosers, validateState } from './game.js';
+import { standings, roundStandings, saveRecord } from './history.js';
 
 const $ = (id) => document.getElementById(id);
-const storageKey = 'papayou.game.v1';
+const storageKey = 'papayou.session.v2';
 let names = [];
 let state = null;
 let selectedId = null;
+let records = [];
+let gameId = null;
+let startedAt = null;
 const escape = (value) => String(value).replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const sum = (cards) => cards.reduce((total, value) => total + value, 0);
 
@@ -14,8 +18,11 @@ function notice(message) {
 }
 function persist() {
   try {
-    if (state) localStorage.setItem(storageKey, JSON.stringify(state));
-    else localStorage.removeItem(storageKey);
+    if (state) {
+      records = saveRecord(records, state, gameId, startedAt, getLosers(state).length ? 'finished' : 'playing');
+    }
+    localStorage.setItem(storageKey, JSON.stringify({ state, names, records, gameId, startedAt }));
+    localStorage.removeItem('papayou.game.v1');
   } catch {
     notice('No se ha podido guardar la partida. Puedes seguir jugando, pero se perderá al cerrar esta página.');
   }
@@ -36,14 +43,50 @@ function renderSetup() {
   $('player-name').disabled = names.length >= 12;
   $('player-form').querySelector('button').disabled = names.length >= 12;
 }
+
+function namesFor(game, ids) {
+  return game.players.filter(({ id }) => ids.includes(id)).map(({ name }) => escape(name)).join(', ');
+}
+
+function historyTable(game) {
+  const ranks = roundStandings(game);
+  const totals = getTotals(game);
+  return `<div class="history-scroll"><table class="history-table"><thead><tr><th scope="col">Ronda</th>${game.players.map((item) => `<th scope="col">${escape(item.name)}</th>`).join('')}<th scope="col">Gana ronda</th><th scope="col">Pierde ronda</th><th scope="col">Va ganando</th><th scope="col">Va perdiendo</th></tr></thead><tbody>${game.rounds.map((round, index) => `<tr><th scope="row">${index + 1}</th>${game.players.map(({ id }) => `<td>+${round.scores[id]}</td>`).join('')}<td>${namesFor(game, ranks[index].round.winners)}</td><td>${namesFor(game, ranks[index].round.losers)}</td><td>${namesFor(game, ranks[index].cumulative.winners)}</td><td>${namesFor(game, ranks[index].cumulative.losers)}</td></tr>`).join('')}</tbody><tfoot><tr><th scope="row">Total</th>${game.players.map(({ id }) => `<td>${totals[id]}</td>`).join('')}<td colspan="4"></td></tr></tfoot></table></div>`;
+}
+
+function renderArchive() {
+  const statuses = { playing: 'En curso', finished: 'Terminada', interrupted: 'Interrumpida' };
+  $('game-history').innerHTML = records.length ? records.slice().reverse().map((record) => {
+    const game = record.game;
+    const rank = standings(game.players, getTotals(game));
+    const finished = record.status === 'finished';
+    const date = new Date(record.startedAt).toLocaleString('es');
+    return `<details class="saved-game"><summary>${escape(date)} · ${statuses[record.status]} · ${game.rounds.length} rondas</summary><p>${finished ? 'Ganó' : 'Va ganando'}: <strong>${namesFor(game, rank.winners)}</strong> · ${finished ? 'Perdió' : 'Va perdiendo'}: <strong>${namesFor(game, rank.losers)}</strong></p>${historyTable(game)}</details>`;
+  }).join('') : '<p class="empty-state">Las partidas aparecerán aquí al cerrar una ronda. No se borran al volver a jugar.</p>';
+}
+
+function prepareGame() {
+  if (state) {
+    records = saveRecord(records, state, gameId, startedAt, getLosers(state).length ? 'finished' : 'interrupted');
+    names = state.players.map(({ name }) => name);
+  }
+  state = null;
+  selectedId = null;
+  gameId = null;
+  startedAt = null;
+}
 function render() {
   $('setup').classList.toggle('hidden', Boolean(state));
   $('game').classList.toggle('hidden', !state);
+  renderArchive();
   if (!state) { renderSetup(); return; }
   if (!state.players.some((player) => player.id === selectedId)) selectedId = state.players[0].id;
   const totals = getTotals(state);
   const losers = getLosers(state);
   const ended = losers.length > 0;
+  const rank = standings(state.players, totals);
+  $('new-game').textContent = ended ? 'Volver a jugar' : 'Nueva partida';
+  $('edit-players').classList.toggle('hidden', state.rounds.length > 0 || Object.values(state.draft).some((cards) => cards.length > 0));
   const player = state.players.find((item) => item.id === selectedId);
   const cards = state.draft[selectedId];
   for (const button of $('card-grid').querySelectorAll('[data-card]')) {
@@ -57,7 +100,7 @@ function render() {
   $('round-title').textContent = ended ? 'Partida terminada' : `Ronda ${state.rounds.length + 1}`;
   $('result').classList.toggle('hidden', !ended);
   $('result').textContent = ended ? `${losers.length > 1 ? 'Empate: pierden' : 'Pierde'} ${state.players.filter((item) => losers.includes(item.id)).map((item) => item.name).join(' y ')} con ${Math.max(...Object.values(totals))} puntos de penalización. Se ha alcanzado el límite de 250.` : '';
-  $('scoreboard').innerHTML = state.players.map((item, index) => `<div class="score-row"><span class="avatar" aria-hidden="true">${index + 1}</span><div class="score-details"><div class="score-name">${escape(item.name)}${losers.includes(item.id) ? ' · Pierde' : ''}</div><div class="progress-track" role="progressbar" aria-label="Penalizaciones de ${escape(item.name)}" aria-valuemin="0" aria-valuemax="250" aria-valuenow="${Math.min(totals[item.id], 250)}" aria-valuetext="${totals[item.id]} de 250 puntos"><div class="progress-fill" style="width:${Math.min(totals[item.id] / 250 * 100, 100)}%"></div></div><div class="score-meta">${ended ? 'Total final' : `En esta ronda: +${sum(state.draft[item.id])}`}</div></div><span class="score">${totals[item.id]}<small> / 250</small></span></div>`).join('');
+  $('scoreboard').innerHTML = state.players.map((item, index) => `<div class="score-row"><span class="avatar" aria-hidden="true">${index + 1}</span><div class="score-details"><div class="score-name">${escape(item.name)}${state.rounds.length ? `${rank.winners.includes(item.id) ? (ended ? ' · Gana' : ' · Va ganando') : ''}${rank.losers.includes(item.id) ? (ended ? ' · Pierde' : ' · Va perdiendo') : ''}` : ''}</div><div class="progress-track" role="progressbar" aria-label="Penalizaciones de ${escape(item.name)}" aria-valuemin="0" aria-valuemax="250" aria-valuenow="${Math.min(totals[item.id], 250)}" aria-valuetext="${totals[item.id]} de 250 puntos"><div class="progress-fill" style="width:${Math.min(totals[item.id] / 250 * 100, 100)}%"></div></div><div class="score-meta">${ended ? 'Total final' : `En esta ronda: +${sum(state.draft[item.id])}`}</div></div><span class="score">${totals[item.id]}<small> / 250</small></span></div>`).join('');
   $('round-editor').classList.toggle('hidden', ended);
   $('player-tabs').innerHTML = state.players.map((item) => `<button class="player-tab ${item.id === selectedId ? 'active' : ''}" data-player="${escape(item.id)}" aria-pressed="${item.id === selectedId}">${escape(item.name)}</button>`).join('');
   $('draft-total').textContent = `+${sum(cards)} puntos`;
@@ -67,7 +110,7 @@ function render() {
   $('finish-round').textContent = `Cerrar ronda ${state.rounds.length + 1}`;
   $('undo-round').disabled = state.rounds.length === 0 || Object.values(state.draft).some((values) => values.length > 0);
   $('undo-round').title = Object.values(state.draft).some((values) => values.length > 0) ? 'Quita las cartas de la ronda actual antes de recuperar la anterior.' : 'Recupera las cartas de la última ronda para corregirlas.';
-  $('history').innerHTML = state.rounds.length ? `<div class="history-scroll"><table class="history-table"><thead><tr><th scope="col">Ronda</th>${state.players.map((item) => `<th scope="col">${escape(item.name)}</th>`).join('')}</tr></thead><tbody>${state.rounds.map((round, index) => `<tr><th scope="row">${index + 1}</th>${state.players.map((item) => `<td>+${round.scores[item.id]}</td>`).join('')}</tr>`).join('')}</tbody><tfoot><tr><th scope="row">Total</th>${state.players.map((item) => `<td>${totals[item.id]}</td>`).join('')}</tr></tfoot></table></div>` : '<p class="empty-state">El historial aparecerá al cerrar la primera ronda.</p>';
+  $('history').innerHTML = state.rounds.length ? historyTable(state) : '<p class="empty-state">El historial aparecerá al cerrar la primera ronda.</p>';
 }
 
 $('card-grid').innerHTML = [...Array.from({ length: 20 }, (_, index) => index + 1), 40].map((value) => `<button class="card-button ${value === 40 ? 'special' : ''}" data-card="${value}" aria-label="Añadir ${value === 40 ? 'Papa Johns (40 puntos)' : `carta de ${value} puntos`}">${value}<small>${value === 40 ? 'Papa Johns' : `+${value}`}</small></button>`).join('');
@@ -80,14 +123,20 @@ $('player-form').addEventListener('submit', (event) => {
   names.push(name);
   $('player-name').value = '';
   notice('');
+  persist();
   renderSetup();
   $('player-name').focus();
 });
 $('players-list').addEventListener('click', (event) => {
   const button = event.target.closest('[data-remove-player]');
-  if (button) { names.splice(Number(button.dataset.removePlayer), 1); renderSetup(); }
+  if (button) { names.splice(Number(button.dataset.removePlayer), 1); persist(); renderSetup(); }
 });
-$('start').addEventListener('click', () => change(() => { state = createGame(names); selectedId = state.players[0].id; }));
+$('start').addEventListener('click', () => change(() => {
+  state = createGame(names);
+  selectedId = state.players[0].id;
+  gameId = crypto.randomUUID();
+  startedAt = new Date().toISOString();
+}));
 $('player-tabs').addEventListener('click', (event) => {
   const button = event.target.closest('[data-player]');
   if (button) { selectedId = button.dataset.player; render(); }
@@ -108,16 +157,40 @@ $('selected-cards').addEventListener('click', (event) => {
 });
 $('finish-round').addEventListener('click', () => change(() => finishRound(state)));
 $('undo-round').addEventListener('click', () => change(() => undoRound(state)));
-$('new-game').addEventListener('click', () => $('confirm-dialog').showModal());
+$('edit-players').addEventListener('click', () => change(prepareGame));
+$('new-game').addEventListener('click', () => {
+  if (getLosers(state).length) change(prepareGame);
+  else $('confirm-dialog').showModal();
+});
 $('confirm-dialog').addEventListener('close', () => {
-  if ($('confirm-dialog').returnValue === 'confirm') change(() => { names = state.players.map((player) => player.name); state = null; selectedId = null; });
+  if ($('confirm-dialog').returnValue === 'confirm') change(prepareGame);
 });
 try {
   const saved = localStorage.getItem(storageKey);
   if (saved) {
     const parsed = JSON.parse(saved);
-    if (validateState(parsed)) state = parsed;
-    else notice('La partida guardada no es válida. Crea una nueva partida.');
+    if ((parsed.state !== null && !validateState(parsed.state)) ||
+        !Array.isArray(parsed.names) || parsed.names.length > 12 ||
+        parsed.names.some((name) => typeof name !== 'string' || !name.trim()) ||
+        !Array.isArray(parsed.records) ||
+        parsed.records.some((record) => !record || typeof record.id !== 'string' ||
+          !['playing', 'finished', 'interrupted'].includes(record.status) ||
+          !Number.isFinite(Date.parse(record.startedAt)) || !validateState(record.game)) ||
+        (parsed.state && (typeof parsed.gameId !== 'string' || !Number.isFinite(Date.parse(parsed.startedAt))))) {
+      throw new Error('Guardado inválido');
+    }
+    ({ state, names, records, gameId, startedAt } = parsed);
+  } else {
+    const legacy = localStorage.getItem('papayou.game.v1');
+    if (legacy) {
+      const parsed = JSON.parse(legacy);
+      if (!validateState(parsed)) throw new Error('Guardado inválido');
+      state = parsed;
+      names = state.players.map(({ name }) => name);
+      gameId = crypto.randomUUID();
+      startedAt = new Date().toISOString();
+      persist();
+    }
   }
 } catch {
   notice('No se ha podido leer la partida guardada. Puedes crear una nueva.');

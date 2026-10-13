@@ -1293,3 +1293,22 @@ dialog.modal::backdrop {
     transition-duration: .01ms !important;
   }
 }
+
+.saved-game {
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.saved-game summary {
+  cursor: pointer;
+  font-weight: 700;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.saved-game summary:focus-visible {
+  outline: 3px solid var(--teal);
+  outline-offset: 4px;
+}

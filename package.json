@@ -6,7 +6,7 @@
   "description": "Marcador de Papayou por rondas con cartas y penalizaciones",
   "scripts": {
     "start": "node server.js",
-    "test": "node --test game.test.js"
+    "test": "node --test game.test.js history.test.js"
   },
   "engines": { "node": ">=20" }
 }
