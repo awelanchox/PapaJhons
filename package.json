@@ -1,0 +1,12 @@
+{
+  "name": "papayou-marcador",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Marcador de Papayou por rondas con cartas y penalizaciones",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test game.test.js"
+  },
+  "engines": { "node": ">=20" }
+}

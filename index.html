@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#176b60">
+  <meta name="description" content="Marcador de Papayou: añade cartas, suma penalizaciones por ronda y juega hasta 250 puntos.">
+  <title>Papayou · Cada ronda cuenta</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Papayou, inicio"><span class="brand-mark" aria-hidden="true">P</span> papayou<span class="eyebrow">MARCADOR</span></a>
+      <span class="status-pill">Límite · 250 puntos</span>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="hero-copy"><p class="eyebrow">MENOS PUNTOS, MÁS VIDA</p><h1>Cada ronda cuenta.</h1><p>Las cartas suman. Tú lleva la cuenta.<br>Quien acumula más penalizaciones, pierde.</p></div>
+        <div class="hero-art" aria-hidden="true"><div class="card-fan"><div class="playing-card">7<small>+7</small></div><div class="playing-card">20<small>+20</small></div><div class="playing-card special">40<small>Papa Johns</small></div></div></div>
+      </section>
+      <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
+      <section id="setup" class="panel setup-panel">
+        <div class="section-heading"><div><p class="eyebrow">LA MESA ESTÁ LISTA</p><h2>¿Quién juega hoy?</h2></div><span class="status-pill">2–12 jugadores</span></div>
+        <p>Añade los nombres y empieza una partida.</p>
+        <form id="player-form" class="player-input-row"><label class="hidden" for="player-name">Nombre del jugador</label><input id="player-name" class="input" placeholder="Nombre del jugador" maxlength="40" autocomplete="off" aria-label="Nombre del jugador" required><button class="button secondary" type="submit">Añadir jugador</button></form>
+        <div id="players-list" class="players-list" aria-label="Jugadores de la partida"></div>
+        <button id="start" class="button primary" disabled>Empezar partida</button>
+      </section>
+      <section id="game" class="hidden" aria-label="Partida">
+        <div class="section-heading"><div><p class="eyebrow">TU PARTIDA</p><h2 id="round-title">Ronda 1</h2></div><button id="new-game" class="button ghost">Nueva partida</button></div>
+        <div id="result" class="notice finished hidden" role="status"></div>
+        <div class="workspace">
+          <section class="panel"><div class="section-heading"><h2>Marcador</h2><span class="status-pill">Penalizaciones</span></div><p>Totales de las rondas cerradas. Al llegar a 250, termina la partida.</p><div id="scoreboard" class="scoreboard"></div></section>
+          <section id="round-editor" class="panel round-panel"><div class="section-heading"><h2>Cartas de la ronda</h2><span id="draft-total" class="status-pill">+0 puntos</span></div><p>Elige un jugador y asigna sus cartas. Cada carta se reparte una sola vez por ronda, incluida Papa Johns, que vale 40 puntos.</p><div id="player-tabs" class="player-tabs" role="group" aria-label="Jugador al que sumar cartas"></div><div id="card-grid" class="card-grid" aria-label="Cartas disponibles"></div><p id="selected-label" class="eyebrow">CARTAS DE ESTA RONDA</p><div id="selected-cards" class="selected-cards" aria-labelledby="selected-label"></div><p class="footer">Quitar una carta la deja disponible. Al repartir las 21 cartas, la ronda se cierra automáticamente y quienes no tienen cartas suman 0. También puedes cerrar la ronda antes.</p><div id="round-summary" class="round-summary"></div><div class="round-actions"><button id="finish-round" class="button primary">Cerrar ronda</button></div></section>
+        </div>
+        <section class="panel history-panel"><div class="section-heading"><div><p class="eyebrow">CARTA A CARTA</p><h2>Historial de rondas</h2></div><button id="undo-round" class="button secondary" disabled>Deshacer última ronda</button></div><div id="history"></div></section>
+      </section>
+    </main>
+    <footer class="footer">Papayou · Cartas 1–20 + Papa Johns (40 puntos) · El total más alto pierde.<br>La partida se guarda en este navegador.</footer>
+  </div>
+  <dialog id="confirm-dialog" class="modal"><form method="dialog"><h2 id="confirm-title">¿Empezar de nuevo?</h2><p id="confirm-copy">Se borrará la partida actual, incluido su historial.</p><div class="round-actions"><button class="button secondary" value="cancel">Cancelar</button><button class="button danger" value="confirm">Sí, nueva partida</button></div></form></dialog>
+</body>
+</html>
